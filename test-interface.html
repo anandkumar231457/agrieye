@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Disease Analysis - Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #2ecc71;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px dashed #2ecc71;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-input-label:hover {
+            background: #e8f5e9;
+            border-color: #27ae60;
+        }
+
+        .file-name {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2ecc71;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .result h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .status-healthy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-diseased {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .severity-low {
+            color: #ffc107;
+        }
+
+        .severity-moderate {
+            color: #ff9800;
+        }
+
+        .severity-high {
+            color: #f44336;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .info-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-card p {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        .section h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .section li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .section li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .pesticide-info {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .error {
+            display: none;
+            padding: 15px;
+            background: #f8d7da;
+            color: #721c24;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Crop Disease Analysis</h1>
+            <p>Upload a crop leaf image for AI-powered disease detection</p>
+        </div>
+
+        <div class="content">
+            <form id="analysisForm">
+                <div class="form-group">
+                    <label for="imageInput">Leaf Image *</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="imageInput" accept="image/*" required>
+                        <label for="imageInput" class="file-input-label">
+                            📷 Click to select image or drag & drop
+                        </label>
+                    </div>
+                    <div class="file-name" id="fileName"></div>
+                    <img id="previewImage" class="preview-image" alt="Preview">
+                </div>
+
+                <div class="form-group">
+                    <label for="cropInput">Crop Type</label>
+                    <select id="cropInput">
+                        <option value="Unknown">Unknown</option>
+                        <option value="Tomato">Tomato</option>
+                        <option value="Potato">Potato</option>
+                        <option value="Rice">Rice</option>
+                        <option value="Wheat">Wheat</option>
+                        <option value="Corn">Corn</option>
+                        <option value="Cotton">Cotton</option>
+                        <option value="Apple">Apple</option>
+                        <option value="Grape">Grape</option>
+                        <option value="Pepper">Pepper</option>
+                        <option value="Strawberry">Strawberry</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="temperatureInput">Temperature (°C)</label>
+                    <input type="number" id="temperatureInput" placeholder="e.g., 28" step="0.1">
+                </div>
+
+                <div class="form-group">
+                    <label for="humidityInput">Humidity (%)</label>
+                    <input type="number" id="humidityInput" placeholder="e.g., 75" min="0" max="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="imageSourceInput">Image Source</label>
+                    <select id="imageSourceInput">
+                        <option value="USER_UPLOAD">User Upload</option>
+                        <option value="ESP32-CAM">ESP32-CAM</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn" id="analyzeBtn">Analyze Leaf</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px;">Analyzing image with AI...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/analyze';
+
+        // File input handling
+        const imageInput = document.getElementById('imageInput');
+        const fileName = document.getElementById('fileName');
+        const previewImage = document.getElementById('previewImage');
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `Selected: ${file.name}`;
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form submission
+        document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const file = imageInput.files[0];
+            if (!file) {
+                showError('Please select an image file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('files', file);
+            formData.append('crop', document.getElementById('cropInput').value);
+            formData.append('temperature', document.getElementById('temperatureInput').value || 'Not provided');
+            formData.append('humidity', document.getElementById('humidityInput').value || 'Not provided');
+            formData.append('imageSource', document.getElementById('imageSourceInput').value);
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+
+                displayResult(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        });
+
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+
+            const isHealthy = data.health_status === 'HEALTHY';
+            const confidencePercent = (data.confidence * 100).toFixed(1);
+
+            let html = `
+                <h2>Analysis Results</h2>
+                <div class="status-badge ${isHealthy ? 'status-healthy' : 'status-diseased'}">
+                    ${data.health_status}
+                </div>
+
+                <div class="info-grid">
+                    ${!isHealthy ? `
+                        <div class="info-card">
+                            <h3>Disease</h3>
+                            <p>${data.disease_name || 'Unknown'}</p>
+                        </div>
+                    ` : ''}
+                    <div class="info-card">
+                        <h3>Confidence</h3>
+                        <p>${confidencePercent}%</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Severity</h3>
+                        <p class="severity-${data.severity.toLowerCase()}">${data.severity}</p>
+                    </div>
+                </div>
+            `;
+
+            if (!isHealthy && data.symptoms && data.symptoms.length > 0) {
+                html += `
+                    <div class="section">
+                        <h3>🔍 Observed Symptoms</h3>
+                        <ul>
+                            ${data.symptoms.map(s => `<li>${s}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (data.recommended_treatment && data.recommended_treatment.length > 0) {
+                html += `
+                    <div class="section">
+                        <h3>💊 Recommended Treatment</h3>
+                        <ul>
+                            ${data.recommended_treatment.map(t => `<li>${t}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (data.pesticide && data.pesticide.required) {
+                html += `
+                    <div class="pesticide-info">
+                        <h3>⚠️ Pesticide Information</h3>
+                        <p><strong>Name:</strong> ${data.pesticide.name}</p>
+                        <p><strong>Dosage:</strong> ${data.pesticide.dosage}</p>
+                        <p><strong>Frequency:</strong> ${data.pesticide.frequency}</p>
+                    </div>
+                `;
+            }
+
+            if (data.preventive_measures && data.preventive_measures.length > 0) {
+                html += `
+                    <div class="section">
+                        <h3>🛡️ Preventive Measures</h3>
+                        <ul>
+                            ${data.preventive_measures.map(m => `<li>${m}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (data.environmental_context) {
+                html += `
+                    <div class="section">
+                        <h3>📊 Environmental Context</h3>
+                        <p><strong>Crop:</strong> ${data.environmental_context.crop}</p>
+                        <p><strong>Temperature:</strong> ${data.environmental_context.temperature}°C</p>
+                        <p><strong>Humidity:</strong> ${data.environmental_context.humidity}%</p>
+                        <p><strong>Source:</strong> ${data.environmental_context.image_source}</p>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="section">
+                    <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                        Analyzed by: ${data.analyzed_by}<br>
+                        Timestamp: ${new Date(data.timestamp).toLocaleString()}
+                    </p>
+                </div>
+            `;
+
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = `Error: ${message}`;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
