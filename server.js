@@ -330,12 +330,13 @@ When answering questions:
         prompt += `Question: ${question}`;
 
         // Try models in order (updated to current available models)
-        const validQA = ['gemini-flash-latest', 'gemini-2.0-flash-lite-001', 'gemini-2.0-flash', 'gemini-pro-latest'];
+        const validQA = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
         let textAnswer = null;
         let lastQaError = null;
 
         for (const mName of validQA) {
             try {
+                const genAI = getGeminiAI('chatbot');
                 console.log(`QA: Trying ${mName}...`);
                 const model = genAI.getGenerativeModel({ model: mName });
                 const result = await model.generateContent(prompt);
@@ -475,11 +476,12 @@ IMPORTANT: Respond ONLY with valid JSON in this exact format:
 Do not include any explanations or markdown. Only the JSON object.`;
 
         // Try models for schedule generation
-        const validModels = ['gemini-flash-latest', 'gemini-2.0-flash-lite-001', 'gemini-2.0-flash'];
+        const validModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
         let scheduleData = null;
 
         for (const modelName of validModels) {
             try {
+                const genAI = getGeminiAI('treatment_suggestions');
                 console.log(`Trying ${modelName} for schedule generation...`);
                 const model = genAI.getGenerativeModel({ model: modelName });
                 const result = await model.generateContent(prompt);
