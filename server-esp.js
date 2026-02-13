@@ -76,7 +76,10 @@ app.post('/api/upload', upload.single('imageFile'), async (req, res) => {
 
         console.log(`📸 [ESP32] Image received: ${req.file.filename}`);
         const imagePath = req.file.path;
-        const imageUrl = `http://${req.hostname}:${PORT}/uploads/${req.file.filename}`;
+
+        // Use HTTPS for Render, HTTP for localhost
+        const protocol = req.hostname.includes('render') ? 'https' : 'http';
+        const imageUrl = `${protocol}://${req.hostname}/uploads/${req.file.filename}`;
 
         // 🚀 Trigger AI Analysis immediately
         const analysis = await analyzeImage(imagePath);

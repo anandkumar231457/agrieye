@@ -57,6 +57,12 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded images securely
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+app.use('/uploads', express.static(uploadDir));
 
 // Session middleware
 app.use(session({
@@ -831,6 +837,18 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         console.log('Triggering Gemini Vision analysis...');
         const imageBase64 = bufferToBase64(req.file.buffer);
         const mimeType = req.file.mimetype;
+
+        // --- SAVE IMAGE TO DISK FOR FRONTEND DISPLAY ---
+        const filename = `esp32-${Date.now()}.jpg`;
+        const filepath = path.join(uploadDir, filename);
+        fs.writeFileSync(filepath, req.file.buffer);
+        console.log(`📸 Image saved to disk: ${filename}`);
+
+        // Generate HTTPS URL for Frontend
+        const protocol = req.hostname.includes('render') ? 'https' : 'http';
+        const imageUrl = `${protocol}://${req.hostname}/uploads/${filename}`;
+        // -----------------------------------------------
+
         const prompt = buildAnalysisPrompt(crop || 'Unknown', temperature || 'Not provided', humidity || 'Not provided', 'ESP32_UPLOAD');
 
         const validModels = [
@@ -896,7 +914,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             medicines: analysisResult.medicines,
             natural_treatments: analysisResult.natural_treatments,
             preventive_measures: analysisResult.preventive_measures,
-            image_path: null, // Could save image to disk and store path
+            image_path: imageUrl, // ✅ Store the HTTPS URL
             analyzed_by: analysisResult.analyzed_by
         });
 
