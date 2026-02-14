@@ -301,6 +301,104 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
     }
 });
 
+// POST /api/upload - Separate endpoint for ESP32/IoT Devices
+// Simpler structure for embedded devices
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+    console.log('[POST] /api/upload - Processing IoT Device Upload');
+
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image file uploaded' });
+        }
+
+        const deviceId = req.body.deviceId || 'ESP32_UNKNOWN';
+        const crop = req.body.crop || 'Unknown';
+        // const apiKey = req.body.apiKey; // Optional simple auth
+
+        console.log(`IoT Upload from ${deviceId} - Crop: ${crop}`);
+
+        // Convert to base64 for Gemini
+        const imageBase64 = bufferToBase64(req.file.buffer);
+        const mimeType = req.file.mimetype;
+
+        let successfulResult = null;
+
+        // Use Priority Model List
+        const validModels = [
+            'gemini-2.5-flash',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro'
+        ];
+
+        for (const modelName of validModels) {
+            try {
+                const genAI = getGeminiAI('image_analysis');
+                const model = genAI.getGenerativeModel({ model: modelName });
+                // IoT prompt can be simpler or same as web
+                const prompt = buildAnalysisPrompt(crop, 'Measured by Device', 'Measured by Device', 'IoT_Device', 'en');
+
+                const imagePart = {
+                    inlineData: { data: imageBase64, mimeType: mimeType }
+                };
+
+                const result = await model.generateContent([prompt, imagePart]);
+                const text = await result.response.text();
+                const cleanedText = text.replace(/```json\n ? /g, '').replace(/```\n?/g, '').trim();
+
+                successfulResult = JSON.parse(cleanedText);
+                successfulResult.analyzed_by = `Gemini(${modelName}) - IoT`;
+                markAPISuccess('image_analysis');
+                break;
+            } catch (error) {
+                console.warn(`IoT Analysis Retry (${modelName}): ${error.message}`);
+                handleAPIError(error, 'image_analysis');
+            }
+        }
+
+        if (successfulResult) {
+            // --- PERSISTENCE: Save to Database with DEVICE ID ---
+            try {
+                const savedRecord = analysisOps.create({
+                    device_id: deviceId, // USES ACTUAL DEVICE ID
+                    crop: crop,
+                    temperature: null, // Could parse from body if sent
+                    humidity: null,
+                    health_status: successfulResult.health_status,
+                    disease_name: successfulResult.disease_name,
+                    confidence: successfulResult.confidence,
+                    severity: successfulResult.severity,
+                    symptoms: successfulResult.symptoms,
+                    recommended_actions: successfulResult.recommended_actions,
+                    medicines: successfulResult.medicines,
+                    natural_treatments: successfulResult.natural_treatments,
+                    preventive_measures: successfulResult.preventive_measures,
+                    image_path: req.file.originalname,
+                    analyzed_by: successfulResult.analyzed_by
+                });
+                console.log(`[IoT] Analysis saved for ${deviceId} (ID: ${savedRecord.id})`);
+
+                // Return simple JSON for ESP32 (less data to parse)
+                return res.json({
+                    status: 'success',
+                    disease: successfulResult.disease_name,
+                    confidence: successfulResult.confidence,
+                    severity: successfulResult.severity
+                });
+
+            } catch (dbError) {
+                console.error('[IoT] DB Save Failed:', dbError.message);
+                return res.status(500).json({ error: 'Database save failed' });
+            }
+        }
+
+        return res.status(500).json({ error: 'AI Analysis failed after retries' });
+
+    } catch (error) {
+        console.error('[IoT] Upload critical error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // POST /api/qa - Gemini Text QA
 app.post('/api/qa', async (req, res) => {
     console.log('[POST] /qa - Processing QA Request');
