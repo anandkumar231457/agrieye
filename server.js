@@ -250,6 +250,31 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
                     crop, temperature, humidity, image_source: imageSource,
                     original_filename: file.originalname
                 };
+
+                // --- PERSISTENCE: Save to Database ---
+                try {
+                    const savedRecord = analysisOps.create({
+                        device_id: 'WEB_UPLOAD', // Mark as web upload
+                        crop: crop,
+                        temperature: temperature,
+                        humidity: humidity,
+                        health_status: successfulResult.health_status,
+                        disease_name: successfulResult.disease_name,
+                        confidence: successfulResult.confidence,
+                        severity: successfulResult.severity,
+                        symptoms: successfulResult.symptoms,
+                        recommended_actions: successfulResult.recommended_actions,
+                        medicines: successfulResult.medicines,
+                        natural_treatments: successfulResult.natural_treatments,
+                        preventive_measures: successfulResult.preventive_measures,
+                        image_path: file.originalname, // Store filename/path
+                        analyzed_by: successfulResult.analyzed_by
+                    });
+                    console.log(`[DB] Saved analysis result ID: ${savedRecord.id}`);
+                } catch (dbError) {
+                    console.error('[DB] Failed to save analysis:', dbError.message);
+                }
+
                 return successfulResult;
             }
 
