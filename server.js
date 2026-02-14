@@ -201,12 +201,10 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
         }
 
         const validModels = [
-            'gemini-2.5-flash-lite',  // NEW: Best free tier quota
-            'gemini-2.5-flash',        // NEW: Good free tier
-            'gemini-flash-lite-latest', // Fallback
-            'gemini-flash-latest',      // Fallback
-            'gemini-2.0-flash-lite-001', // Old (likely exhausted)
-            'gemini-pro-latest'          // Old (likely exhausted)
+            'gemini-2.5-flash',       // PRIORITY: Confirmed working & fast
+            'gemini-1.5-flash',       // Fallback: Stable standard
+            'gemini-1.5-pro',         // Fallback: High reasoning
+            'gemini-flash-latest'     // Fallback: Legacy alias
         ];
 
 
