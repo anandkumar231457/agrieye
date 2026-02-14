@@ -94,8 +94,8 @@ const upload = multer({
 });
 
 // Helper function to build context-aware prompt
-function buildAnalysisPrompt(crop, temperature, humidity, imageSource) {
-    return `You are an expert agricultural plant pathologist with deep knowledge of crop diseases, fungal, bacterial, viral infections, and nutrient deficiencies.
+function buildAnalysisPrompt(crop, temperature, humidity, imageSource, language) {
+    let prompt = `You are an expert agricultural plant pathologist with deep knowledge of crop diseases, fungal, bacterial, viral infections, and nutrient deficiencies.
 
 Analyze the uploaded crop leaf image carefully.
 
@@ -104,29 +104,33 @@ Context:
 - Temperature: ${temperature} °C
 - Humidity: ${humidity} %
 - Image source: ${imageSource}
+`;
 
+    // Language Instruction - MOVED TO TOP FOR PRIORITY
+    if (language && language !== 'en') {
+        const langMap = { 'hi': 'Hindi', 'pa': 'Punjabi', 'ta': 'Tamil' };
+        const langName = langMap[language] || language;
+        prompt += `\nCRITICAL LOCALIZATION INSTRUCTION:
+1. You MUST PROVIDE THE ANALYSIS RESULTS IN ${langName}.
+2. Translate ALL string VALUES (disease_name, symptoms, recommended_actions, medicines, etc.) into ${langName}.
+3. DO NOT TRANSLATE THE JSON KEYS. Keep keys like "health_status", "disease_name", "symptoms" in English.
+4. If the disease name has a common English name, providing it in brackets is helpful, but the main text must be ${langName}.
+\n`;
+    } else {
+        prompt += `\nProvide the analysis results in English.\n`;
+    }
+
+    prompt += `
 Tasks:
 1. Identify whether the crop leaf is HEALTHY or DISEASED.
-2. If diseased, identify the MOST LIKELY disease name.
+2. If diseased, identify the MOST LIKELY disease name (in the requested language).
 3. Provide a confidence score between 0 and 1 (e.g., 0.92 for 92% confidence).
 4. Classify disease severity as: LOW, MODERATE, or HIGH.
-5. List visible symptoms observed in the image.
-6. Provide 3-5 SPECIFIC recommended actions for this disease (not generic advice).
-7. Suggest 5-7 chemical pesticides/fungicides with dosage and frequency. Include both common and alternative options to give variety.
-8. Provide 8-10 natural/organic treatment methods. MUST include diverse options:
-   - Botanical extracts (neem, garlic, turmeric, etc.)
-   - Biological controls (beneficial microbes, predatory insects)
-   - Cultural practices (crop rotation, spacing, pruning)
-   - Organic sprays (baking soda, milk solution, compost tea)
-   - Physical methods (mulching, soil amendments)
-9. Suggest 8-10 preventive and control measures. MUST include:
-   - Resistant variety selection
-   - Proper irrigation and drainage
-   - Sanitation practices
-   - Crop rotation strategies
-   - Monitoring and early detection
-   - Environmental management
-   - Soil health improvement
+5. List visible symptoms observed in the image (in the requested language).
+6. Provide 3-5 SPECIFIC recommended actions for this disease (in the requested language).
+7. Suggest 5-7 chemical pesticides/fungicides with dosage and frequency (in the requested language).
+8. Provide 8-10 natural/organic treatment methods (in the requested language).
+9. Suggest 8-10 preventive and control measures (in the requested language).
 10. If the leaf appears healthy, clearly state that no disease is detected and suggest general preventive care.
 
 IMPORTANT RULES:
@@ -161,6 +165,8 @@ Expected JSON structure:
   "natural_treatments": [ "string" ],
   "preventive_measures": [ "string" ]
 }`;
+
+    return prompt;
 }
 
 // Helper function to convert buffer to base64
@@ -184,8 +190,9 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
         const temperature = req.body.temperature || 'Not provided';
         const humidity = req.body.humidity || 'Not provided';
         const imageSource = req.body.imageSource || 'USER_UPLOAD';
+        const language = req.body.language || 'en';
 
-        console.log(`Analyzing ${req.files.length} images of ${crop}...`);
+        console.log(`Analyzing ${req.files.length} images of ${crop} (Language: ${language})...`);
 
         // Check API configuration
         if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
@@ -217,7 +224,7 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
                 try {
                     const genAI = getGeminiAI('image_analysis');
                     const model = genAI.getGenerativeModel({ model: modelName });
-                    const prompt = buildAnalysisPrompt(crop, temperature, humidity, imageSource);
+                    const prompt = buildAnalysisPrompt(crop, temperature, humidity, imageSource, language);
                     const imagePart = {
                         inlineData: { data: imageBase64, mimeType: mimeType }
                     };
@@ -225,13 +232,13 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
                     const result = await model.generateContent([prompt, imagePart]);
                     const text = await result.response.text();
 
-                    const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+                    const cleanedText = text.replace(/```json\n ? /g, '').replace(/```\n?/g, '').trim();
                     successfulResult = JSON.parse(cleanedText);
-                    successfulResult.analyzed_by = `Gemini (${modelName}) - Multi-Key Rotation`;
+                    successfulResult.analyzed_by = `Gemini(${modelName}) - Multi - Key Rotation`;
                     markAPISuccess('image_analysis');
                     break;
                 } catch (error) {
-                    console.warn(`Model ${modelName} failed for image ${index}:`, error.message);
+                    console.warn(`Model ${modelName} failed for image ${index}: `, error.message);
                     handleAPIError(error, 'image_analysis');
                     lastError = error;
                 }
@@ -248,7 +255,7 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
 
             // Fallback for this specific image
             const fallback = getFallbackResponse();
-            fallback.analyzed_by = `Simulation (Analysis Failed: ${lastError?.message || 'Unknown'})`;
+            fallback.analyzed_by = `Simulation(Analysis Failed: ${lastError?.message || 'Unknown'})`;
             fallback.environmental_context = { original_filename: file.originalname };
             return fallback;
         });
@@ -269,13 +276,13 @@ app.post('/api/qa', async (req, res) => {
     console.log('[POST] /qa - Processing QA Request');
 
     try {
-        const { question, context, history } = req.body;
+        const { question, context, history, language } = req.body;
 
         if (!question) {
             return res.status(400).json({ error: 'Question is required' });
         }
 
-        console.log(`Question received: "${question}"`);
+        console.log(`Question received: "${question}"(Language: ${language || 'en'})`);
 
         // Robust context logging
         try {
@@ -306,16 +313,25 @@ Answer the following question from a farmer clearly, concisely, and accurately.
 
 `;
 
+        // Language Instruction
+        if (language && language !== 'en') {
+            const langMap = { 'hi': 'Hindi', 'pa': 'Punjabi', 'ta': 'Tamil' };
+            const langName = langMap[language] || language;
+            prompt += `IMPORTANT: Answer the ENTIRE response in ${langName} language.\n\n`;
+        } else {
+            prompt += `Answer in English.\n\n`;
+        }
+
         if (context) {
             prompt += `IMPORTANT - CURRENT DIAGNOSIS CONTEXT:
-The farmer has just received an AI analysis of their crop. Here are the details:
+The farmer has just received an AI analysis of their crop.Here are the details:
 ${context}
 
 When answering questions:
-- Reference specific details from this diagnosis (disease name, severity, symptoms, treatments)
-- If they ask about treatments, refer to the recommended medicines, natural treatments, or preventive measures from the analysis
-- If they ask "what disease" or "what's wrong", use the disease name from the context
-- Be specific and practical based on this diagnosis
+- Reference specific details from this diagnosis(disease name, severity, symptoms, treatments)
+    - If they ask about treatments, refer to the recommended medicines, natural treatments, or preventive measures from the analysis
+        - If they ask "what disease" or "what's wrong", use the disease name from the context
+            - Be specific and practical based on this diagnosis
 
 `;
         }
@@ -323,11 +339,11 @@ When answering questions:
         if (history && Array.isArray(history)) {
             prompt += `CONVERSATION HISTORY:
              ${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
-             
-             `;
+
+`;
         }
 
-        prompt += `Question: ${question}`;
+        prompt += `Question: ${question} `;
 
         // Try models in order (updated to current available models)
         const validQA = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
@@ -341,10 +357,10 @@ When answering questions:
                 const model = genAI.getGenerativeModel({ model: mName });
                 const result = await model.generateContent(prompt);
                 textAnswer = await result.response.text();
-                console.log(`✅ QA Success with ${mName}`);
+                console.log(`✅ QA Success with ${mName} `);
                 break;
             } catch (err) {
-                console.warn(`QA Failed (${mName}):`, err.message);
+                console.warn(`QA Failed(${mName}): `, err.message);
                 lastQaError = err;
             }
         }
@@ -439,41 +455,43 @@ app.post('/api/generate-schedule', async (req, res) => {
         }
 
         // Build schedule generation prompt
-        const prompt = `You are an expert agricultural advisor. Create a detailed day-by-day treatment schedule for the following crop disease.
+        const prompt = `You are an expert agricultural advisor.Create a detailed day - by - day treatment schedule for the following crop disease.
 
-Disease: ${disease}
+    Disease: ${disease}
 Severity: ${severity}
 Treatment Type: ${treatmentType === 'medicine' ? 'Chemical/Medicine-based' : 'Organic/Natural'}
 
 ${treatmentType === 'medicine' && medicines?.length > 0 ? `
 Available Medicines:
 ${medicines.map(m => `- ${m.name}: ${m.dosage}, ${m.frequency}`).join('\n')}
-` : ''}
+` : ''
+            }
 
 ${treatmentType === 'organic' && naturalTreatments?.length > 0 ? `
 Natural Treatments Available:
 ${naturalTreatments.map((t, i) => `${i + 1}. ${t}`).join('\n')}
-` : ''}
+` : ''
+            }
 
 Preventive Measures:
 ${preventiveMeasures?.map((p, i) => `${i + 1}. ${p}`).join('\n') || 'General crop care'}
 
-Create a concise 7-day treatment schedule with specific daily tasks.
-For each day, provide 2-3 actionable, practical tasks that farmers can easily follow.
+Create a concise 7 - day treatment schedule with specific daily tasks.
+For each day, provide 2 - 3 actionable, practical tasks that farmers can easily follow.
 Keep tasks short and clear.
 
-IMPORTANT: Respond ONLY with valid JSON in this exact format:
+    IMPORTANT: Respond ONLY with valid JSON in this exact format:
 {
-  "duration": 7,
-  "schedule": [
-    {
-      "day": 1,
-      "tasks": ["task 1", "task 2", "task 3"]
-    }
-  ]
+    "duration": 7,
+        "schedule": [
+            {
+                "day": 1,
+                "tasks": ["task 1", "task 2", "task 3"]
+            }
+        ]
 }
 
-Do not include any explanations or markdown. Only the JSON object.`;
+Do not include any explanations or markdown.Only the JSON object.`;
 
         // Try models for schedule generation
         const validModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
@@ -491,11 +509,11 @@ Do not include any explanations or markdown. Only the JSON object.`;
                 const jsonMatch = text.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     scheduleData = JSON.parse(jsonMatch[0]);
-                    console.log(`✅ Schedule generated with ${modelName}`);
+                    console.log(`✅ Schedule generated with ${modelName} `);
                     break;
                 }
             } catch (err) {
-                console.warn(`Failed with ${modelName}:`, err.message);
+                console.warn(`Failed with ${modelName}: `, err.message);
             }
         }
 
