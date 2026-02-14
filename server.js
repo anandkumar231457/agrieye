@@ -204,6 +204,8 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
             'gemini-2.5-flash',       // PRIORITY: Confirmed working & fast
             'gemini-1.5-flash',       // Fallback: Stable standard
             'gemini-1.5-pro',         // Fallback: High reasoning
+            'gemini-1.5-pro-latest',  // Fallback: Latest Pro
+            'gemini-1.0-pro',         // Fallback: Legacy Pro
             'gemini-flash-latest'     // Fallback: Legacy alias
         ];
 
@@ -236,7 +238,7 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
                     markAPISuccess('image_analysis');
                     break;
                 } catch (error) {
-                    console.warn(`Model ${modelName} failed for image ${index}: `, error.message);
+                    console.warn(`⚠️ Model ${modelName} failed/exhausted. Switching to next model... Error: ${error.message}`);
                     handleAPIError(error, 'image_analysis');
                     lastError = error;
                 }
