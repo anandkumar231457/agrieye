@@ -25,7 +25,11 @@ async function testESP32Upload() {
 
     try {
         console.log('📤 Uploading to backend...');
-        const response = await axios.post('http://localhost:8000/api/upload', form, {
+        // CHANGE THIS TO YOUR RENDER URL or Localhost
+        const BACKEND_URL = 'https://agrieye-25u3.onrender.com/api/upload';
+        console.log(`Target: ${BACKEND_URL}`);
+
+        const response = await axios.post(BACKEND_URL, form, {
             headers: form.getHeaders(),
             timeout: 60000
         });

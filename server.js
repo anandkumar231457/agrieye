@@ -206,12 +206,10 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
         }
 
         const validModels = [
-            'gemini-2.5-flash',       // PRIORITY: Confirmed working & fast
-            'gemini-1.5-flash',       // Fallback: Stable standard
-            'gemini-1.5-pro',         // Fallback: High reasoning
-            'gemini-1.5-pro-latest',  // Fallback: Latest Pro
-            'gemini-1.0-pro',         // Fallback: Legacy Pro
-            'gemini-flash-latest'     // Fallback: Legacy alias
+            'gemini-2.5-flash',       // Verified Available
+            'gemini-2.0-flash',       // Verified Available
+            'gemini-flash-latest',    // Fallback
+            'gemini-1.5-flash-latest' // Try this just in case, but prioritize others
         ];
 
 
@@ -323,11 +321,11 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 
         let successfulResult = null;
 
-        // Use Priority Model List
+        // Use Verified Priority Model List
         const validModels = [
             'gemini-2.5-flash',
-            'gemini-1.5-flash',
-            'gemini-1.5-pro'
+            'gemini-2.0-flash',
+            'gemini-flash-latest'
         ];
 
         for (const modelName of validModels) {
@@ -353,6 +351,14 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
                 console.warn(`IoT Analysis Retry (${modelName}): ${error.message}`);
                 handleAPIError(error, 'image_analysis');
             }
+        }
+
+        if (!successfulResult) {
+            console.warn('[IoT] All models failed. Using Fallback Simulation.');
+            successfulResult = getFallbackResponse();
+            successfulResult.analyzed_by = 'Simulation (AI Quota Exceeded)';
+            // Add filename to context so it's saved
+            successfulResult.environmental_context = { original_filename: req.file.originalname };
         }
 
         if (successfulResult) {
