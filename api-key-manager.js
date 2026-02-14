@@ -10,6 +10,17 @@ class APIKeyManager {
     constructor() {
         // API Keys from different Google accounts
         this.apiKeys = [
+            // 1. Environment Variable Key (Primary for Deployment)
+            ...(process.env.GEMINI_API_KEY ? [{
+                id: 'env_key',
+                key: process.env.GEMINI_API_KEY,
+                name: 'Environment Key',
+                features: ['image_analysis', 'chatbot', 'treatment_suggestions', 'qa', 'backup'],
+                failCount: 0,
+                lastUsed: null,
+                cooldownUntil: null
+            }] : []),
+
             {
                 id: 'key1',
                 key: 'AIzaSyBVBVpatEH4cKyOK4sjE-G2pJe7jEpThBE',
