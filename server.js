@@ -71,13 +71,17 @@ app.use(cors({
 app.use(express.json());
 
 // Session middleware
+// Session middleware
+app.set('trust proxy', 1); // Trust first proxy (Render/Heroku/Nginx)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Required for secure cookies behind proxy
     cookie: {
-        secure: false, // Set to true in production with HTTPS
+        secure: process.env.NODE_ENV === 'production' || process.env.RENDER === 'true', // True in production
         httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' || process.env.RENDER === 'true' ? 'none' : 'lax', // None for cross-site
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     }
 }));

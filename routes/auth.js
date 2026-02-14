@@ -94,6 +94,7 @@ router.post('/google', async (req, res) => {
 // Get current user
 router.get('/me', (req, res) => {
     try {
+        console.log(`[GET] /auth/me - Session ID: ${req.sessionID}, User ID: ${req.session?.userId}`);
         if (!req.session || !req.session.userId) {
             return res.status(401).json({ error: 'Not authenticated' });
         }
