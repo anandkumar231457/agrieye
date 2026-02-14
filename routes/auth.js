@@ -93,22 +93,29 @@ router.post('/google', async (req, res) => {
 
 // Get current user
 router.get('/me', (req, res) => {
-    if (!req.session || !req.session.userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-    }
+    try {
+        if (!req.session || !req.session.userId) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
 
-    const user = userOps.findById(req.session.userId);
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-    }
+        const user = userOps.findById(req.session.userId);
+        if (!user) {
+            // If user is not found in DB but session exists, clear session
+            req.session.destroy();
+            return res.status(401).json({ error: 'Session invalid - please login again' });
+        }
 
-    res.json({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profile_picture,
-        location: user.location
-    });
+        res.json({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            profilePicture: user.profile_picture,
+            location: user.location
+        });
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ error: 'Internal server error while fetching user' });
+    }
 });
 
 // Logout

@@ -4,8 +4,7 @@
     "description": "Mock backend for AgriEye",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js",
-        "start:esp": "node server-esp.js"
+        "start": "node server.js"
     },
     "dependencies": {
         "@google/generative-ai": "^0.21.0",
