@@ -60,6 +60,73 @@ class APIKeyManager {
         ];
 
         this.currentKeyIndex = 0;
+        this.availableModels = [];
+        this.primaryModel = 'gemini-2.5-flash';
+    }
+
+    /**
+     * Fetch available models from Google API and validate access
+     */
+    async validateAvailableModels() {
+        console.log('[API Key Manager] Validating available models...');
+        // Use any valid key to check permissions
+        const keyInfo = this.getKeyForFeature('backup');
+
+        if (!keyInfo) {
+            console.warn('[API Key Manager] No valid keys found for validation.');
+            return;
+        }
+
+        try {
+            // Manual Fetch to list models (SDK support varies)
+            // Dynamically import node-fetch if needed (common in ESM/CJS mixed envs)
+            let fetch;
+            try {
+                fetch = (await import('node-fetch')).default;
+            } catch (e) {
+                fetch = require('node-fetch');
+            }
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${keyInfo.key}`);
+            const data = await response.json();
+
+            if (data.models) {
+                // Filter for Gemini models that support generateContent
+                this.availableModels = data.models
+                    .filter(m => m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => m.name.replace('models/', '')); // Standardize name
+
+                console.log(`[API Key Manager] Discovered ${this.availableModels.length} models:`, this.availableModels.join(', '));
+
+                // Determine Best Model based on Priority List
+                const priorityList = [
+                    'gemini-2.5-flash',
+                    'gemini-2.0-flash',
+                    'gemini-1.5-flash',
+                    'gemini-flash-latest',
+                    'gemini-1.5-pro',
+                    'gemini-pro'
+                ];
+
+                for (const p of priorityList) {
+                    if (this.availableModels.includes(p)) {
+                        this.primaryModel = p;
+                        console.log(`[API Key Manager] Primary Priority Model set to: ${this.primaryModel}`);
+                        break;
+                    }
+                }
+            } else {
+                console.warn('[API Key Manager] No models returned from API check.');
+            }
+        } catch (error) {
+            console.error('[API Key Manager] Model validation failed:', error.message);
+        }
+    }
+
+    getBestModel() { return this.primaryModel; }
+
+    getAvailableModels() {
+        return [this.primaryModel, ...this.availableModels];
     }
 
     /**

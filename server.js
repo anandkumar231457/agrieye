@@ -14,6 +14,13 @@ const { db, analysisOps } = require('./database');
 const app = express();
 const port = process.env.PORT || 8000;
 
+const apiKeyManager = require('./api-key-manager');
+
+// Initialize dynamic models on startup
+(async () => {
+    await apiKeyManager.validateAvailableModels();
+})();
+
 // OpenWeather API configuration
 const OPENWEATHER_API_KEY = process.env.WEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
@@ -205,12 +212,10 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
             return res.json([getFallbackResponse()]); // Return array
         }
 
-        const validModels = [
-            'gemini-2.5-flash',       // Verified Available
-            'gemini-2.0-flash',       // Verified Available
-            'gemini-flash-latest',    // Fallback
-            'gemini-1.5-flash-latest' // Try this just in case, but prioritize others
-        ];
+        // Use Dynamic Model List
+        const validModels = apiKeyManager.getAvailableModels();
+        // Fallback if empty (shouldn't happen if validation ran)
+        if (validModels.length === 0) validModels.push('gemini-2.5-flash');
 
 
 
@@ -321,12 +326,8 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 
         let successfulResult = null;
 
-        // Use Verified Priority Model List
-        const validModels = [
-            'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-flash-latest'
-        ];
+        // Use Dynamic Model List
+        const validModels = apiKeyManager.getAvailableModels();
 
         for (const modelName of validModels) {
             try {
@@ -627,8 +628,8 @@ Keep tasks short and clear.
 
 Do not include any explanations or markdown.Only the JSON object.`;
 
-        // Try models for schedule generation
-        const validModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+        // Use Dynamic Model List
+        const validModels = apiKeyManager.getAvailableModels();
         let scheduleData = null;
 
         for (const modelName of validModels) {
@@ -985,15 +986,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         const mimeType = req.file.mimetype;
         const prompt = buildAnalysisPrompt(crop || 'Unknown', temperature || 'Not provided', humidity || 'Not provided', 'ESP32_UPLOAD');
 
-        const validModels = [
-            'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-flash-latest',
-            'gemini-2.0-flash-lite-001',
-            'gemini-2.0-flash-lite',
-            'gemini-pro-latest',
-            'gemini-2.5-pro'
-        ];
+        const validModels = apiKeyManager.getAvailableModels();
         let analysisResult = null;
         let lastError = null;
 
