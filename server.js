@@ -1119,11 +1119,12 @@ app.listen(port, '0.0.0.0', () => {
 // --- DEBUG ENDPOINT ---
 app.get('/api/debug-diagnosis', async (req, res) => {
     try {
-        const { getGeminiAI } = require('./api-helpers');
+        const { getGeminiAI, apiKeyManager } = require('./api-helpers');
         const genAI = getGeminiAI('image_analysis');
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const bestModel = apiKeyManager.getBestModel() || 'gemini-2.0-flash';
+        const model = genAI.getGenerativeModel({ model: bestModel });
         const result = await model.generateContent('Test');
-        res.json({ status: 'ok', response: await result.response.text(), key_manager_status: require('./api-helpers').getAPIStatus() });
+        res.json({ status: 'ok', model: bestModel, response: await result.response.text(), key_manager_status: apiKeyManager.getStatus() });
     } catch (error) {
         res.status(500).json({ error: error.message, stack: error.stack, env_key: !!process.env.GEMINI_API_KEY });
     }
