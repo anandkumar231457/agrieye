@@ -100,10 +100,9 @@ class APIKeyManager {
 
                 // Determine Best Model based on Priority List
                 const priorityList = [
-                    'gemini-2.5-flash',
-                    'gemini-2.0-flash',
-                    'gemini-1.5-flash',
-                    'gemini-flash-latest',
+                    'gemini-2.0-flash',        // Newest, fastest
+                    'gemini-2.0-flash-lite',   // Very fast, good for simple tasks
+                    'gemini-1.5-flash',        // Fallback
                     'gemini-1.5-pro',
                     'gemini-pro'
                 ];

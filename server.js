@@ -219,7 +219,7 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
         // Use Dynamic Model List
         const validModels = apiKeyManager.getAvailableModels();
         // Fallback if empty (shouldn't happen if validation ran)
-        if (validModels.length === 0) validModels.push('gemini-2.5-flash');
+        if (validModels.length === 0) validModels.push('gemini-2.0-flash');
 
 
 
@@ -1121,7 +1121,7 @@ app.get('/api/debug-diagnosis', async (req, res) => {
     try {
         const { getGeminiAI } = require('./api-helpers');
         const genAI = getGeminiAI('image_analysis');
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         const result = await model.generateContent('Test');
         res.json({ status: 'ok', response: await result.response.text(), key_manager_status: require('./api-helpers').getAPIStatus() });
     } catch (error) {
