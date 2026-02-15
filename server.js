@@ -1115,3 +1115,16 @@ app.listen(port, '0.0.0.0', () => {
     console.log(`📊 Mode: ${hasApiKey ? '✅ Gemini Vision AI' : '⚠️  Simulation (Set GEMINI_API_KEY)'}`);
     console.log(`🔬 Ready for disease analysis\n`);
 });
+
+// --- DEBUG ENDPOINT ---
+app.get('/api/debug-diagnosis', async (req, res) => {
+    try {
+        const { getGeminiAI } = require('./api-helpers');
+        const genAI = getGeminiAI('image_analysis');
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const result = await model.generateContent('Test');
+        res.json({ status: 'ok', response: await result.response.text(), key_manager_status: require('./api-helpers').getAPIStatus() });
+    } catch (error) {
+        res.status(500).json({ error: error.message, stack: error.stack, env_key: !!process.env.GEMINI_API_KEY });
+    }
+});
