@@ -1130,21 +1130,52 @@ app.get('/api/status', (req, res) => {
 // --- DEBUG ENDPOINT ---
 app.get('/api/debug-diagnosis', async (req, res) => {
     let currentModel = 'unknown';
+    const failedModels = [];
+
     try {
         const { getGeminiAI, apiKeyManager } = require('./api-helpers');
         const genAI = getGeminiAI('image_analysis');
-        const bestModel = apiKeyManager.getBestModel() || 'gemini-2.0-flash';
-        currentModel = bestModel;
 
-        const model = genAI.getGenerativeModel({ model: bestModel });
-        const result = await model.generateContent('Test');
-        res.json({ status: 'ok', model: bestModel, response: await result.response.text(), key_manager_status: apiKeyManager.getStatus() });
+        // Try ALL available models, just like the real endpoint
+        const availableModels = apiKeyManager.getAvailableModels();
+        let successfulResponse = null;
+        let workingModel = null;
+
+        for (const modelName of availableModels) {
+            try {
+                currentModel = modelName;
+                console.log(`[Debug] Testing model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent('Test');
+                successfulResponse = await result.response.text();
+                workingModel = modelName;
+                break; // Stop if one works
+            } catch (innerError) {
+                console.warn(`[Debug] Model ${modelName} failed: ${innerError.message}`);
+                failedModels.push({ model: modelName, error: innerError.message });
+            }
+        }
+
+        if (workingModel) {
+            res.json({
+                status: 'ok',
+                model: workingModel,
+                response: successfulResponse,
+                key_manager_status: apiKeyManager.getStatus(),
+                deploy_version: 'v3-debug-loop-fix'
+            });
+        } else {
+            throw new Error(`All models failed. Models tried: ${availableModels.join(', ')}`);
+        }
+
     } catch (error) {
         res.status(500).json({
             error: error.message,
             stack: error.stack,
             env_key: !!process.env.GEMINI_API_KEY,
-            attempted_model: currentModel,
+            attempted_model: currentModel, // Last attempted
+            failed_models: failedModels,
+            deploy_version: 'v3-debug-loop-fix',
             key_manager_state: require('./api-helpers').getAPIStatus()
         });
     }
