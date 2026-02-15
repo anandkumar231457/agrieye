@@ -61,7 +61,7 @@ class APIKeyManager {
 
         this.currentKeyIndex = 0;
         this.availableModels = [];
-        this.primaryModel = 'gemini-2.5-flash';
+        this.primaryModel = 'gemini-2.0-flash';
     }
 
     /**
@@ -125,7 +125,12 @@ class APIKeyManager {
     getBestModel() { return this.primaryModel; }
 
     getAvailableModels() {
-        return [this.primaryModel, ...this.availableModels];
+        // If discovery failed, return a hardcoded safe list to ensure retry logic works
+        if (this.availableModels.length === 0) {
+            return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+        }
+        // Ensure primary is first, then unique others
+        return [...new Set([this.primaryModel, ...this.availableModels])];
     }
 
     /**
