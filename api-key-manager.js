@@ -100,11 +100,15 @@ class APIKeyManager {
 
                 // Determine Best Model based on Priority List
                 const priorityList = [
-                    'gemini-2.0-flash',        // Newest, fastest
-                    'gemini-2.0-flash-lite',   // Very fast, good for simple tasks
-                    'gemini-1.5-flash',        // Fallback
-                    'gemini-1.5-pro',
-                    'gemini-pro'
+                    'gemini-2.0-flash',          // Latest stable
+                    'gemini-2.0-flash-lite-preview-02-05', // Latest lightweight
+                    'gemini-1.5-flash',          // Standard fast
+                    'gemini-1.5-flash-8b',       // Ultra efficient
+                    'gemini-1.5-pro',            // High intelligence
+                    'gemini-pro-vision',         // Legacy Vision
+                    'gemini-1.0-pro-vision-latest',
+                    'gemini-pro',                // Legacy Text
+                    'gemini-1.0-pro'
                 ];
 
                 for (const p of priorityList) {
@@ -127,7 +131,15 @@ class APIKeyManager {
     getAvailableModels() {
         // If discovery failed, return a hardcoded safe list to ensure retry logic works
         if (this.availableModels.length === 0) {
-            return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+            return [
+                'gemini-2.0-flash',
+                'gemini-2.0-flash-lite-preview-02-05',
+                'gemini-1.5-flash',
+                'gemini-1.5-flash-8b',
+                'gemini-1.5-pro',
+                'gemini-pro-vision',
+                'gemini-1.0-pro'
+            ];
         }
         // Ensure primary is first, then unique others
         return [...new Set([this.primaryModel, ...this.availableModels])];
