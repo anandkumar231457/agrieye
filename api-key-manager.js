@@ -21,42 +21,22 @@ class APIKeyManager {
                 cooldownUntil: null
             }] : []),
 
+            // 2. New User-Provided Key (Text Optimized)
             {
-                id: 'key1',
-                key: 'AIzaSyBVBVpatEH4cKyOK4sjE-G2pJe7jEpThBE',
-                name: 'Account 1',
-                features: ['image_analysis'], // Primary for image analysis
+                id: 'key_text_new',
+                key: 'AIzaSyAcUgiox_HGUVhoeeKlouRoSmS2jGcNTf0',
+                name: 'User Provided Key (Text Only)',
+                features: ['chatbot', 'treatment_suggestions', 'qa', 'backup'], // TEXT ONLY as requested
                 failCount: 0,
                 lastUsed: null,
                 cooldownUntil: null
             },
+            // Note: Previous hardcoded keys (key1-key4) removed due to exposure warnings.
+            /* 
             {
-                id: 'key2',
-                key: 'AIzaSyCLZ-fXp28kUik2i4DtQb6W3qD7Tt95Usg',
-                name: 'Account 2',
-                features: ['chatbot', 'qa'], // For chatbot and Q&A
-                failCount: 0,
-                lastUsed: null,
-                cooldownUntil: null
-            },
-            {
-                id: 'key3',
-                key: 'AIzaSyCBFKGawuLN04_whi3kPc6pmiCtuMeLxgw',
-                name: 'Account 3',
-                features: ['treatment_suggestions'], // For treatment plan generation
-                failCount: 0,
-                lastUsed: null,
-                cooldownUntil: null
-            },
-            {
-                id: 'key4',
-                key: 'AIzaSyD_Tb4jPVjziKeikITYXEfZc2E5cbmbq78',
-                name: 'Account 4 (Previous)',
-                features: ['backup'], // Backup for any feature
-                failCount: 0,
-                lastUsed: null,
-                cooldownUntil: null
+                id: 'key1', ...
             }
+            */
         ];
 
         this.currentKeyIndex = 0;

@@ -7,6 +7,11 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
+console.log('[DEBUG] Env Config:', {
+    hasGemini: !!process.env.GEMINI_API_KEY,
+    hasPlantId: !!process.env.PLANT_ID_API_KEY,
+    plantIdKeyLength: process.env.PLANT_ID_API_KEY ? process.env.PLANT_ID_API_KEY.length : 0
+});
 
 // Initialize database
 const { db, analysisOps } = require('./database');
@@ -210,49 +215,130 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
 
         console.log(`Analyzing ${req.files.length} images of ${crop} (Language: ${language})...`);
 
-        // Check API configuration
-        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-            console.warn('Gemini API key not configured, using fallback mock data');
+        // Check API configuration (Use Manager to detect ANY valid key)
+        const hasGeminiKey = apiKeyManager.getStatus().some(k => k.id && k.available);
+        const hasPlantIdKey = !!process.env.PLANT_ID_API_KEY;
+
+        if (!hasGeminiKey && !hasPlantIdKey) {
+            console.warn('No AI API keys configured, using fallback mock data');
             return res.json([getFallbackResponse()]); // Return array
         }
 
-        // Use Dynamic Model List
+        // Use Dynamic Model List for Gemini
         const validModels = apiKeyManager.getAvailableModels();
-        // Fallback if empty (shouldn't happen if validation ran)
         if (validModels.length === 0) validModels.push('gemini-2.0-flash');
-
-
 
         // Process all files in parallel
         const analysisPromises = req.files.map(async (file, index) => {
+            console.log(`[DEBUG] File ${index}: Start processing. hasPlantIdKey=${hasPlantIdKey}`);
             const imageBase64 = bufferToBase64(file.buffer);
             const mimeType = file.mimetype;
 
             let successfulResult = null;
             let lastError = null;
 
-            // Retry strategy per file with API key rotation
-            for (const modelName of validModels) {
+            // --- STRATEGY 1: PLANT.ID (Primary ID) + GEMINI (Detailed Treatments) ---
+            if (hasPlantIdKey) {
                 try {
-                    const genAI = getGeminiAI('image_analysis');
-                    const model = genAI.getGenerativeModel({ model: modelName });
-                    const prompt = buildAnalysisPrompt(crop, temperature, humidity, imageSource, language);
-                    const imagePart = {
-                        inlineData: { data: imageBase64, mimeType: mimeType }
-                    };
+                    const plantIdService = require('./plant-id-service');
+                    const plantIdResult = await plantIdService.analyzeImage(imageBase64, {
+                        latitude: null,
+                        longitude: null
+                    });
 
-                    const result = await model.generateContent([prompt, imagePart]);
-                    const text = await result.response.text();
+                    if (plantIdResult) {
+                        console.log(`[AgriEye] Plant.id identified: ${plantIdResult.disease_name} (${plantIdResult.health_status})`);
 
-                    const cleanedText = text.replace(/```json\n ? /g, '').replace(/```\n?/g, '').trim();
-                    successfulResult = JSON.parse(cleanedText);
-                    successfulResult.analyzed_by = `Gemini(${modelName}) - Multi - Key Rotation`;
-                    markAPISuccess('image_analysis');
-                    break;
-                } catch (error) {
-                    console.warn(`⚠️ Model ${modelName} failed/exhausted. Switching to next model... Error: ${error.message}`);
-                    handleAPIError(error, 'image_analysis');
-                    lastError = error;
+                        // If Healthy, return immediately
+                        if (plantIdResult.health_status === 'HEALTHY') {
+                            successfulResult = plantIdResult;
+                        }
+                        // If Diseased, use Gemini to generate detailed treatments
+                        else if (hasGeminiKey) {
+                            console.log(`[AgriEye] Asking Gemini for treatments for: ${plantIdResult.disease_name}...`);
+
+                            try {
+                                // Use a lightweight model for text generation
+                                const genAI = getGeminiAI('treatment_suggestions');
+                                const bestModel = apiKeyManager.getBestModel() || 'gemini-1.5-flash';
+                                const model = genAI.getGenerativeModel({ model: bestModel });
+
+                                const treatmentPrompt = `
+                                The plant "${crop}" has been identified with the disease "${plantIdResult.disease_name}".
+                                
+                                Please provide detailed treatment recommendations in JSON format.
+                                Focus on:
+                                1. Specific medicines/chemicals (with dosage).
+                                2. Natural/Organic treatments.
+                                3. Preventive measures.
+                                
+                                Response MUST be valid JSON matching this schema:
+                                {
+                                    "recommended_actions": ["string"],
+                                    "medicines": [{ "name": "string", "dosage": "string", "frequency": "string", "application": "string" }],
+                                    "natural_treatments": ["string"],
+                                    "preventive_measures": ["string"]
+                                }
+                                Do not include markdown formatting. Return ONLY the JSON.
+                                Language: ${language}
+                                `;
+
+                                const result = await model.generateContent(treatmentPrompt);
+                                const text = await result.response.text();
+                                const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+                                const geminiTreatments = JSON.parse(cleanedText);
+                                // Merge results
+                                successfulResult = {
+                                    ...plantIdResult,
+                                    ...geminiTreatments,
+                                    analyzed_by: `Plant.id (ID) + Gemini (Rx)`
+                                };
+                                console.log('[AgriEye] Hybrid Analysis Complete.');
+
+                            } catch (geminiError) {
+                                console.warn('[AgriEye] Gemini treatment generation failed, returning Plant.id result only.', geminiError.message);
+                                // Fallback to Plant.id's basic treatments if Gemini API fails
+                                successfulResult = plantIdResult;
+                            }
+                        } else {
+                            // No Gemini key, just use Plant.id result
+                            successfulResult = plantIdResult;
+                        }
+                    }
+                } catch (plantIdError) {
+                    console.warn(`[AgriEye] Plant.id failed, falling back to Gemini Vision. Error: ${plantIdError.message}`);
+                    lastError = plantIdError;
+                    successfulResult = null; // Ensure null to trigger fallback
+                }
+            }
+
+            // --- STRATEGY 2: GEMINI (Fallback) ---
+            if (!successfulResult && hasGeminiKey) {
+                console.log(`[AgriEye] Attempting analysis with Gemini (Multi-Model)...`);
+                // Retry strategy per file with API key rotation
+                for (const modelName of validModels) {
+                    try {
+                        const genAI = getGeminiAI('image_analysis');
+                        const model = genAI.getGenerativeModel({ model: modelName });
+                        const prompt = buildAnalysisPrompt(crop, temperature, humidity, imageSource, language);
+                        const imagePart = {
+                            inlineData: { data: imageBase64, mimeType: mimeType }
+                        };
+
+                        const result = await model.generateContent([prompt, imagePart]);
+                        const text = await result.response.text();
+
+                        const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+                        successfulResult = JSON.parse(cleanedText);
+                        successfulResult.analyzed_by = `Gemini(${modelName})`;
+                        markAPISuccess('image_analysis');
+                        break;
+                    } catch (error) {
+                        console.warn(`⚠️ Model ${modelName} failed/exhausted. Switching to next model... Error: ${error.message}`);
+                        handleAPIError(error, 'image_analysis');
+                        lastError = error;
+                    }
                 }
             }
 
