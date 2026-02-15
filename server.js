@@ -1116,16 +1116,36 @@ app.listen(port, '0.0.0.0', () => {
     console.log(`🔬 Ready for disease analysis\n`);
 });
 
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'online',
+        gateway: 'active',
+        gemini_configured: !!process.env.GEMINI_API_KEY,
+        mode: process.env.GEMINI_API_KEY ? 'AI Analysis' : 'Simulation',
+        deploy_version: 'v2-fallback-fix-checked',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // --- DEBUG ENDPOINT ---
 app.get('/api/debug-diagnosis', async (req, res) => {
+    let currentModel = 'unknown';
     try {
         const { getGeminiAI, apiKeyManager } = require('./api-helpers');
         const genAI = getGeminiAI('image_analysis');
         const bestModel = apiKeyManager.getBestModel() || 'gemini-2.0-flash';
+        currentModel = bestModel;
+
         const model = genAI.getGenerativeModel({ model: bestModel });
         const result = await model.generateContent('Test');
         res.json({ status: 'ok', model: bestModel, response: await result.response.text(), key_manager_status: apiKeyManager.getStatus() });
     } catch (error) {
-        res.status(500).json({ error: error.message, stack: error.stack, env_key: !!process.env.GEMINI_API_KEY });
+        res.status(500).json({
+            error: error.message,
+            stack: error.stack,
+            env_key: !!process.env.GEMINI_API_KEY,
+            attempted_model: currentModel,
+            key_manager_state: require('./api-helpers').getAPIStatus()
+        });
     }
 });
