@@ -44,11 +44,36 @@ router.post('/google', async (req, res) => {
             });
         }
 
-        // Verify Google token
-        const ticket = await client.verifyIdToken({
-            idToken: credential,
-            audience: process.env.GOOGLE_CLIENT_ID
-        });
+        // Verify Google token - Support BOTH Firebase projects
+        // Old project (Web): 690425827682-cfoeu44j00gf0sast6glbtur658d7d90.apps.googleusercontent.com
+        // New project (Mobile): 1004415817502-clgpv9ge1jji650jvkestfg78rdnil0h.apps.googleusercontent.com
+        const validClientIds = [
+            process.env.GOOGLE_CLIENT_ID, // Primary (old web project)
+            '1004415817502-clgpv9ge1jji650jvkestfg78rdnil0h.apps.googleusercontent.com' // New mobile project
+        ];
+
+        let ticket;
+        let verificationError;
+
+        // Try verifying with each Client ID
+        for (const clientId of validClientIds) {
+            try {
+                const tempClient = new OAuth2Client(clientId);
+                ticket = await tempClient.verifyIdToken({
+                    idToken: credential,
+                    audience: clientId
+                });
+                console.log(`✅ Token verified with Client ID: ${clientId.substring(0, 20)}...`);
+                break; // Success, exit loop
+            } catch (err) {
+                verificationError = err;
+                console.log(`⚠️ Verification failed with ${clientId.substring(0, 20)}...: ${err.message}`);
+            }
+        }
+
+        if (!ticket) {
+            throw verificationError || new Error('Token verification failed with all Client IDs');
+        }
 
         const payload = ticket.getPayload();
         const googleId = payload['sub'];
