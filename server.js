@@ -105,6 +105,13 @@ app.use((req, res, next) => {
     next();
 });
 
+// Mount route handlers
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/user', require('./routes/user'));
+app.use('/api/treatment', require('./routes/treatment'));
+app.use('/api/weather', require('./routes/weather'));
+
+
 // Import API Key Manager for multi-key rotation
 const { getGeminiAI, handleAPIError, markAPISuccess, getAPIStatus } = require('./api-helpers');
 
