@@ -264,50 +264,66 @@ app.post('/api/analyze', upload.array('files', 10), async (req, res) => {
                         else if (hasGeminiKey) {
                             console.log(`[AgriEye] Asking Gemini for treatments for: ${plantIdResult.disease_name}...`);
 
-                            try {
-                                // Use a lightweight model for text generation
-                                const genAI = getGeminiAI('treatment_suggestions');
-                                const bestModel = apiKeyManager.getBestModel() || 'gemini-1.5-flash';
-                                const model = genAI.getGenerativeModel({ model: bestModel });
+                            // Multi-model retry strategy for treatment generation
+                            const treatmentModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+                            let geminiTreatments = null;
+                            let lastTreatmentError = null;
 
-                                const treatmentPrompt = `
-                                The plant "${crop}" has been identified with the disease "${plantIdResult.disease_name}".
-                                
-                                Please provide detailed treatment recommendations in JSON format.
-                                Focus on:
-                                1. Specific medicines/chemicals (with dosage).
-                                2. Natural/Organic treatments.
-                                3. Preventive measures.
-                                
-                                Response MUST be valid JSON matching this schema:
-                                {
-                                    "recommended_actions": ["string"],
-                                    "medicines": [{ "name": "string", "dosage": "string", "frequency": "string", "application": "string" }],
-                                    "natural_treatments": ["string"],
-                                    "preventive_measures": ["string"]
+                            for (const modelName of treatmentModels) {
+                                try {
+                                    console.log(`[AgriEye] Trying ${modelName} for treatment generation...`);
+                                    const genAI = getGeminiAI('treatment_suggestions');
+                                    const model = genAI.getGenerativeModel({ model: modelName });
+
+                                    const treatmentPrompt = `
+                                    The plant "${crop}" has been identified with the disease "${plantIdResult.disease_name}".
+                                    
+                                    Please provide detailed treatment recommendations in JSON format.
+                                    Focus on:
+                                    1. Specific medicines/chemicals (with dosage).
+                                    2. Natural/Organic treatments.
+                                    3. Preventive measures.
+                                    
+                                    Response MUST be valid JSON matching this schema:
+                                    {
+                                        "recommended_actions": ["string"],
+                                        "medicines": [{ "name": "string", "dosage": "string", "frequency": "string", "application": "string" }],
+                                        "natural_treatments": ["string"],
+                                        "preventive_measures": ["string"]
+                                    }
+                                    Do not include markdown formatting. Return ONLY the JSON.
+                                    Language: ${language}
+                                    `;
+
+                                    const result = await model.generateContent(treatmentPrompt);
+                                    const text = await result.response.text();
+                                    const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+                                    geminiTreatments = JSON.parse(cleanedText);
+                                    console.log(`[AgriEye] ✅ ${modelName} successfully generated treatments`);
+                                    break; // Success! Exit loop
+
+                                } catch (modelError) {
+                                    console.warn(`[AgriEye] ⚠️ ${modelName} failed: ${modelError.message}`);
+                                    lastTreatmentError = modelError;
+                                    // Continue to next model
                                 }
-                                Do not include markdown formatting. Return ONLY the JSON.
-                                Language: ${language}
-                                `;
+                            }
 
-                                const result = await model.generateContent(treatmentPrompt);
-                                const text = await result.response.text();
-                                const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-                                const geminiTreatments = JSON.parse(cleanedText);
-                                // Merge results
+                            if (geminiTreatments) {
+                                // Merge Plant.id classification + Gemini treatments
                                 successfulResult = {
                                     ...plantIdResult,
                                     ...geminiTreatments,
                                     analyzed_by: `Plant.id (ID) + Gemini (Rx)`
                                 };
                                 console.log('[AgriEye] Hybrid Analysis Complete.');
-
-                            } catch (geminiError) {
-                                console.warn('[AgriEye] Gemini treatment generation failed, returning Plant.id result only.', geminiError.message);
-                                // Fallback to Plant.id's basic treatments if Gemini API fails
+                            } else {
+                                console.warn('[AgriEye] All Gemini models failed for treatment generation, returning Plant.id result only.');
+                                // Fallback to Plant.id's basic treatments if all Gemini models fail
                                 successfulResult = plantIdResult;
                             }
+
                         } else {
                             // No Gemini key, just use Plant.id result
                             successfulResult = plantIdResult;
