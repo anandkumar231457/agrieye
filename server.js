@@ -1289,3 +1289,27 @@ app.get('/api/debug-diagnosis', async (req, res) => {
         });
     }
 });
+
+// =============================================
+// SERVE FRONTEND STATIC FILES (Production)
+// =============================================
+const frontendDist = path.join(__dirname, 'frontend', 'dist');
+
+if (fs.existsSync(frontendDist)) {
+    // Serve built React app as static files
+    app.use(express.static(frontendDist));
+
+    // Catch-all: send index.html for any non-API route (React Router support)
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.join(frontendDist, 'index.html'));
+        }
+    });
+
+    console.log('Frontend is being served from: ' + frontendDist);
+}
+
+// Start server
+app.listen(port, () => {
+    console.log('AgriEye running on port ' + port);
+});
