@@ -5,9 +5,7 @@ const AuthContext = createContext(null);
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within AuthProvider');
-    }
+    if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
 };
 
@@ -16,11 +14,16 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-
-
-    // Check authentication status on mount
+    // On mount: try to restore auth from stored JWT
     useEffect(() => {
-        checkAuth();
+        const token = localStorage.getItem('agrieye_token');
+        if (token) {
+            // Send JWT in header - this works even after cold starts
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            checkAuth();
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const checkAuth = async () => {
@@ -30,6 +33,9 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(true);
         } catch (error) {
             console.error('Auth check failed:', error);
+            // Token invalid/expired - clear it
+            localStorage.removeItem('agrieye_token');
+            delete api.defaults.headers.common['Authorization'];
             setUser(null);
             setIsAuthenticated(false);
         } finally {
@@ -40,9 +46,17 @@ export const AuthProvider = ({ children }) => {
     const login = async (credential) => {
         try {
             const response = await api.post('/auth/google', { credential });
-            setUser(response.data.user);
+            const { token, user: userData, isNewUser } = response.data;
+
+            // Store JWT in localStorage (survives page refresh AND server cold starts)
+            if (token) {
+                localStorage.setItem('agrieye_token', token);
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            }
+
+            setUser(userData);
             setIsAuthenticated(true);
-            return { success: true, isNewUser: response.data.isNewUser };
+            return { success: true, isNewUser };
         } catch (error) {
             console.error('Login error:', error);
             return { success: false, error: error.response?.data?.error || 'Login failed' };
@@ -55,6 +69,8 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
+            localStorage.removeItem('agrieye_token');
+            delete api.defaults.headers.common['Authorization'];
             setUser(null);
             setIsAuthenticated(false);
         }
@@ -64,18 +80,8 @@ export const AuthProvider = ({ children }) => {
         setUser(prev => ({ ...prev, ...userData }));
     };
 
-    const value = {
-        user,
-        loading,
-        isAuthenticated,
-        login,
-        logout,
-        updateUser,
-        checkAuth
-    };
-
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider value={{ user, loading, isAuthenticated, login, logout, updateUser, checkAuth }}>
             {children}
         </AuthContext.Provider>
     );
