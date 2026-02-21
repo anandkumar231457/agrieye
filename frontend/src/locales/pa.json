@@ -1,0 +1,63 @@
+{
+    "app_name": "AgriEye",
+    "sidebar": {
+        "dashboard": "ਡੈਸ਼ਬੋਰਡ",
+        "monitoring": "ਫੀਲਡ ਨੋਡ",
+        "severity": "ਜੋਖਮ ਵਿਸ਼ਲੇਸ਼ਣ",
+        "history": "ਇਲਾਜ ਯੋਜਨਾ",
+        "profile": "ਪ੍ਰੋਫਾਈਲ",
+        "settings": "ਸੈਟਿੰਗਾਂ",
+        "logout": "ਲਾਗ ਆਉਟ",
+        "login": "ਗੂਗਲ ਨਾਲ ਲਾਗਇਨ ਕਰੋ"
+    },
+    "dashboard": {
+        "welcome": "ਜੀ ਆਇਆਂ ਨੂੰ,",
+        "upload_title": "ਫਸਲ ਦੀ ਤਸਵੀਰ ਅਪਲੋਡ ਕਰੋ",
+        "upload_subtitle": "ਬਿਮਾਰੀ ਦਾ ਪਤਾ ਲਗਾਉਣ ਲਈ AI ਵਿਸ਼ਲੇਸ਼ਣ",
+        "select_crop": "ਫਸਲ ਦੀ ਕਿਸਮ ਚੁਣੋ",
+        "analyze_btn": "ਵਿਸ਼ਲੇਸ਼ਣ ਸ਼ੁਰੂ ਕਰੋ",
+        "scanning": "ਨਮੂਨੇ ਦੀ ਜਾਂਚ..."
+    },
+    "chatbot": {
+        "placeholder": "ਆਪਣੀਆਂ ਫਸਲਾਂ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ...",
+        "thinking": "ਸੋਚ ਰਿਹਾ ਹਾਂ...",
+        "send": "ਭੇਜੋ",
+        "title": "AgriEye ਸਹਾਇਕ"
+    },
+    "common": {
+        "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
+        "error": "ਇੱਕ ਗਲਤੀ ਹੋਈ",
+        "success": "ਸਫਲਤਾ",
+        "save": "ਸੇਵ ਕਰੋ",
+        "cancel": "ਰੱਦ ਕਰੋ",
+        "language": "ਭਾਸ਼ਾ",
+        "unknown": "ਅਣਜਾਣ"
+    },
+    "analysis": {
+        "result_title": "ਵਿਸ਼ਲੇਸ਼ਣ ਨਤੀਜੇ",
+        "detected": "ਪਤਾ ਲੱਗਿਆ",
+        "healthy_title": "ਕੋਈ ਚਿੰਤਾ ਨਹੀਂ - ਫਸਲ ਸਿਹਤਮੰਦ ਹੈ",
+        "warning_title": "ਤੁਰੰਤ ਧਿਆਨ ਦੇਣ ਦੀ ਲੋੜ ਹੈ",
+        "info_title": "ਜਾਂਚ ਪੂਰੀ - ਇਲਾਜ ਯੋਜਨਾ ਦੇਖੋ",
+        "category": "ਰੋਗ ਸ਼੍ਰੇਣੀ",
+        "severity": "ਗੰਭੀਰਤਾ ਪੱਧਰ",
+        "confidence": "ਭਰੋਸਾ ਸਕੋਰ",
+        "time": "ਪਤਾ ਲਗਾਉਣ ਦਾ ਸਮਾਂ",
+        "symptoms": "ਦੇਖੇ ਗਏ ਲੱਛਣ",
+        "actions": "ਸੁਝਾਏ ਗਏ ਉਪਾਅ",
+        "medicines": "ਦਵਾਈ ਇਲਾਜ ਵੇਰਵੇ",
+        "organic": "ਕੁਦਰਤੀ ਅਤੇ ਜੈਵਿਕ ਇਲਾਜ",
+        "prevention": "ਰੋਕਥਾਮ ਉਪਾਅ",
+        "dosage": "ਖੁਰਾਕ",
+        "frequency": "ਆਵਿਰਤੀ",
+        "recommended": "ਸਿਫਾਰਸ਼ ਕੀਤੀ",
+        "as_recommended": "ਸਿਫਾਰਸ਼ ਅਨੁਸਾਰ",
+        "as_needed": "ਲੋੜ ਅਨੁਸਾਰ",
+        "strategy_balanced": "ਸੰਤੁਲਿਤ",
+        "strategy_high_effective": "ਬਹੁਤ ਪ੍ਰਭਾਵਸ਼ਾਲੀ",
+        "strategy_low_cost": "ਬਜਟ ਅਨੁਕੂਲ",
+        "desc_balanced": "ਲਾਗਤ ਅਤੇ ਪ੍ਰਭਾਵਸ਼ੀਲਤਾ ਦਾ ਅਨੁਕੂਲ ਸੰਤੁਲਨ।",
+        "desc_high": "ਕੰਟਰੋਲ ਲਈ ਵੱਧ ਤੋਂ ਵੱਧ ਸ਼ਕਤੀ।",
+        "desc_low": "ਲਾਗਤ-ਪ੍ਰਭਾਵਸ਼ਾਲੀ ਹੱਲ।"
+    }
+}

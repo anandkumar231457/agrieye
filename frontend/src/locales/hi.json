@@ -1,0 +1,63 @@
+{
+    "app_name": "AgriEye",
+    "sidebar": {
+        "dashboard": "टैशबोर्ड",
+        "monitoring": "फील्ड नोड",
+        "severity": "जोखिम विश्लेषण",
+        "history": "उपचार योजना",
+        "profile": "प्रोफ़ाइल",
+        "settings": "सेटिंग्स",
+        "logout": "लॉग आउट",
+        "login": "Google के साथ लॉगिन करें"
+    },
+    "dashboard": {
+        "welcome": "वापसी पर स्वागत है,",
+        "upload_title": "फसल की छवि अपलोड करें",
+        "upload_subtitle": "रोग का पता लगाने के लिए एआई विश्लेषण",
+        "select_crop": "फसल का प्रकार चुनें",
+        "analyze_btn": "विश्लेषण शुरू करें",
+        "scanning": "नमूनों की स्कैनिंग..."
+    },
+    "chatbot": {
+        "placeholder": "अपनी फसलों के बारे में कुछ भी पूछें...",
+        "thinking": "विचार कर रहा हूँ...",
+        "send": "भेजें",
+        "title": "AgriEye सहायक"
+    },
+    "common": {
+        "loading": "लोड हो रहा है...",
+        "error": "एक त्रुटि हुई",
+        "success": "सफलता",
+        "save": "सहेजें",
+        "cancel": "रद्द करें",
+        "language": "भाषा",
+        "unknown": "अज्ञात"
+    },
+    "analysis": {
+        "result_title": "विश्लेषण परिणाम",
+        "detected": "का पता चला",
+        "healthy_title": "कोई चिंता नहीं - फसल स्वस्थ है",
+        "warning_title": "तत्काल ध्यान देने की आवश्यकता है",
+        "info_title": "निदान पूरा - उपचार योजना देखें",
+        "category": "रोग श्रेणी",
+        "severity": "गंभीरता स्तर",
+        "confidence": "विश्वास स्कोर",
+        "time": "पता लगाने का समय",
+        "symptoms": "देखे गए लक्षण",
+        "actions": "सुझाए गए उपाय",
+        "medicines": "दवा उपचार विवरण",
+        "organic": "प्राकृतिक और जैविक उपचार",
+        "prevention": "निवारक उपाय",
+        "dosage": "खुराक",
+        "frequency": "आवृत्ति",
+        "recommended": "सुझाया गया",
+        "as_recommended": "सुझाए अनुसार",
+        "as_needed": "आवश्यकतानुसार",
+        "strategy_balanced": "संतुलित",
+        "strategy_high_effective": "अत्यधिक प्रभावी",
+        "strategy_low_cost": "किफायती",
+        "desc_balanced": "लागत और प्रभावकारिता का इष्टतम संतुलन।",
+        "desc_high": "नियंत्रण के लिए अधिकतम शक्ति।",
+        "desc_low": "लागत प्रभावी समाधान।"
+    }
+}

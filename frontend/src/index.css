@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuOKfMZg.ttf) format('truetype');
+}
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    @apply bg-[#F5F7FA] text-gray-900 antialiased;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Premium Green Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #BBF7D0;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #16A34A;
+}
+
+/* Glass & Gradient Utilities */
+.glass-panel {
+  @apply bg-white/90 backdrop-blur-xl border border-white/50 shadow-organic rounded-3xl;
+}
+
+.text-gradient {
+  background-image: linear-gradient(to right, #16A34A, #14532D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-primary-gradient {
+  @apply bg-brand-gradient text-white border-none shadow-organic hover:bg-brand-gradient-hover hover:scale-[1.02] transition-all duration-300 font-bold tracking-wide uppercase text-sm cursor-pointer relative overflow-hidden;
+}
+
+/* Stronger Organic Shadow for depth */
+.shadow-organic {
+  box-shadow: 0 10px 40px -10px rgba(22, 163, 74, 0.12), 0 0 2px rgba(22, 163, 74, 0.05);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 25px rgba(34, 197, 94, 0.4);
+}
+
+/* Pulse Animation for Green Status */
+@keyframes pulse-green-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+  }
+}
+
+.animate-pulse-green {
+  animation: pulse-green-glow 2s infinite;
+}
+
+/* Spline 3D Background Styles - Crisp & Technical */
+.spline-background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+  /* Clean gradient background for particles */
+  background: linear-gradient(180deg, #FAFFFE 0%, #F0FDF4 100%);
+}
+
+.spline-background-container spline-viewer {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  /* Crisp rendering - NO blur */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Performance optimizations */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Remove any default filters */
+  filter: none;
+  -webkit-filter: none;
+  /* Sharp antialiasing */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure content stays above Spline background */
+.content-layer {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+/* Enterprise Soft UI Button Utilities */
+.btn-primary {
+  @apply px-8 py-4 bg-brand-gradient text-white font-bold rounded-xl shadow-button hover:shadow-button-hover hover:-translate-y-0.5 transition-all duration-300;
+}
+
+.btn-primary:hover {
+  @apply bg-brand-gradient-hover;
+}
+
+.btn-secondary {
+  @apply px-8 py-4 bg-white text-brand-main font-semibold rounded-xl border-2 border-brand-main shadow-card hover:shadow-elevated transition-all duration-300;
+}
+
+.btn-secondary:hover {
+  @apply border-brand-leaf;
+}
+
+.btn-pill {
+  @apply px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300;
+}
+
+/* Input Field Utilities */
+.input-field {
+  @apply w-full px-4 py-3 bg-white border border-brand-leaf/20 rounded-2xl text-brand-deep placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-main/20 focus:border-brand-main/40 transition-all duration-300;
+}
+
+.input-field-soft {
+  @apply w-full px-5 py-4 bg-brand-mint/10 border border-brand-leaf/15 rounded-2xl text-brand-deep placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-main/20 focus:border-brand-main/30 focus:bg-white transition-all duration-300;
+}
+
+/* Badge & Pill Utilities */
+.badge-green {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-mint text-brand-deep text-xs font-bold border border-brand-leaf/20 shadow-sm;
+}
+
+.badge-pill {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-light/50 text-brand-main text-xs font-semibold;
+}
+
+.badge-status {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs tracking-wide shadow-sm;
+}
+
+/* Enterprise Card Utilities */
+.card-modern {
+  @apply bg-white rounded-2xl shadow-card border border-gray-200 p-6 transition-all duration-300 hover:shadow-elevated;
+}
+
+.card-primary {
+  @apply bg-white rounded-2xl shadow-elevated border border-gray-200 p-8 transition-all duration-300 hover:shadow-floating;
+}
+
+.card-soft {
+  @apply bg-white rounded-xl shadow-card border border-gray-200 p-6;
+}
+
+/* Smooth Transitions */
+.transition-smooth {
+  @apply transition-all duration-300;
+}
+
+.transition-smooth-slow {
+  @apply transition-all duration-500;
+}
+
+/* Focus Utilities for Accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-brand-main/30 focus:ring-offset-2;
+}
+
+.focus-ring-soft {
+  @apply focus:outline-none focus:ring-2 focus:ring-brand-main/20 focus:border-brand-main/40;
+}

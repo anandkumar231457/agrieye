@@ -1,0 +1,63 @@
+{
+    "app_name": "AgriEye",
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "monitoring": "Field Node",
+        "severity": "Risk Analysis",
+        "history": "Treatment Plan",
+        "profile": "Profile",
+        "settings": "Settings",
+        "logout": "Logout",
+        "login": "Login with Google"
+    },
+    "dashboard": {
+        "welcome": "Welcome back,",
+        "upload_title": "Upload Crop Image",
+        "upload_subtitle": "AI Analysis for Disease Detection",
+        "select_crop": "Select Crop Type",
+        "analyze_btn": "Run Multi-Scan Analysis",
+        "scanning": "Scanning Specimens..."
+    },
+    "chatbot": {
+        "placeholder": "Ask AgriEye anything about your crops...",
+        "thinking": "Thinking...",
+        "send": "Send",
+        "title": "AgriEye Assistant"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "success": "Success",
+        "save": "Save",
+        "cancel": "Cancel",
+        "language": "Language",
+        "unknown": "Unknown"
+    },
+    "analysis": {
+        "result_title": "Analysis Results",
+        "detected": "Detected",
+        "healthy_title": "No concerns identified - Crop is healthy",
+        "warning_title": "Immediate attention required",
+        "info_title": "Diagnosis complete - Review treatment plan",
+        "category": "Disease Category",
+        "severity": "Severity Level",
+        "confidence": "Confidence Score",
+        "time": "Detection Time",
+        "symptoms": "Observed Symptoms",
+        "actions": "Recommended Actions",
+        "medicines": "Medicine Treatment Details",
+        "organic": "Natural & Organic Treatments",
+        "prevention": "Preventive Measures",
+        "dosage": "Dosage",
+        "frequency": "Frequency",
+        "recommended": "Recommended",
+        "as_recommended": "As recommended",
+        "as_needed": "As needed",
+        "strategy_balanced": "Balanced",
+        "strategy_high_effective": "High Effective",
+        "strategy_low_cost": "Budget Friendly",
+        "desc_balanced": "Optimal balance of cost & efficacy.",
+        "desc_high": "Maximum strength for control.",
+        "desc_low": "Cost-effective solutions."
+    }
+}
