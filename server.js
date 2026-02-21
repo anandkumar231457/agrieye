@@ -600,9 +600,10 @@ When answering questions:
 
         for (const mName of validQA) {
             try {
-                const genAI = getGeminiAI('chatbot');
+                const { GoogleGenerativeAI: GenAI } = require('@google/generative-ai');
+                const directAI = new GenAI(process.env.GEMINI_API_KEY);
                 console.log(`QA: Trying ${mName}...`);
-                const model = genAI.getGenerativeModel({ model: mName });
+                const model = directAI.getGenerativeModel({ model: mName });
                 const result = await model.generateContent(prompt);
                 textAnswer = await result.response.text();
                 console.log(`✅ QA Success with ${mName} `);

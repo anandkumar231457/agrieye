@@ -21,22 +21,7 @@ class APIKeyManager {
                 cooldownUntil: null
             }] : []),
 
-            // 2. New User-Provided Key (Text Optimized)
-            {
-                id: 'key_text_new',
-                key: 'AIzaSyAcUgiox_HGUVhoeeKlouRoSmS2jGcNTf0',
-                name: 'User Provided Key (Text Only)',
-                features: ['chatbot', 'treatment_suggestions', 'qa', 'backup'], // TEXT ONLY as requested
-                failCount: 0,
-                lastUsed: null,
-                cooldownUntil: null
-            },
-            // Note: Previous hardcoded keys (key1-key4) removed due to exposure warnings.
-            /* 
-            {
-                id: 'key1', ...
-            }
-            */
+            // Note: Hardcoded keys removed for security. Only use GEMINI_API_KEY env var.
         ];
 
         this.currentKeyIndex = 0;
