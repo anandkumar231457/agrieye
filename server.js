@@ -593,8 +593,8 @@ When answering questions:
 
         prompt += `Question: ${question} `;
 
-        // Try models in order (updated to current stable models)
-        const validQA = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
+        // Try models in order - use current Gemini models
+        const validQA = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
         let textAnswer = null;
         let lastQaError = null;
 
