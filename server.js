@@ -1218,13 +1218,6 @@ app.use((err, req, res, next) => {
 });
 
 
-app.listen(port, '0.0.0.0', () => {
-    const hasApiKey = process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'YOUR_API_KEY_HERE';
-    console.log(`\n🌱 AgriEye Backend running on http://0.0.0.0:${port}`);
-    console.log(`📊 Mode: ${hasApiKey ? '✅ Gemini Vision AI' : '⚠️  Simulation (Set GEMINI_API_KEY)'}`);
-    console.log(`🔬 Ready for disease analysis\n`);
-});
-
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'online',
@@ -1289,27 +1282,23 @@ app.get('/api/debug-diagnosis', async (req, res) => {
         });
     }
 });
-
 // =============================================
 // SERVE FRONTEND STATIC FILES (Production)
 // =============================================
 const frontendDist = path.join(__dirname, 'frontend', 'dist');
-
 if (fs.existsSync(frontendDist)) {
-    // Serve built React app as static files
     app.use(express.static(frontendDist));
-
-    // Catch-all: send index.html for any non-API route (React Router support)
     app.get('*', (req, res) => {
         if (!req.path.startsWith('/api')) {
             res.sendFile(path.join(frontendDist, 'index.html'));
         }
     });
-
-    console.log('Frontend is being served from: ' + frontendDist);
+    console.log('Serving frontend from: ' + frontendDist);
 }
 
 // Start server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
+    const hasApiKey = process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'YOUR_API_KEY_HERE';
     console.log('AgriEye running on port ' + port);
+    console.log('Mode: ' + (hasApiKey ? 'Gemini Vision AI' : 'Simulation'));
 });
