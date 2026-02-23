@@ -593,33 +593,47 @@ When answering questions:
 
         prompt += `Question: ${question} `;
 
-        // Try models in order - use current Gemini models
-        const validQA = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+        // Direct Gemini REST API - bypasses SDK issues entirely (Node 22 has built-in fetch)
+        const geminiKey = process.env.GEMINI_API_KEY;
+        const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.0-pro'];
         let textAnswer = null;
-        let lastQaError = null;
+        let lastError = null;
 
-        for (const mName of validQA) {
+        for (const modelName of geminiModels) {
             try {
-                const { GoogleGenerativeAI: GenAI } = require('@google/generative-ai');
-                const directAI = new GenAI(process.env.GEMINI_API_KEY);
-                console.log(`QA: Trying ${mName}...`);
-                const model = directAI.getGenerativeModel({ model: mName });
-                const result = await model.generateContent(prompt);
-                textAnswer = await result.response.text();
-                console.log(`✅ QA Success with ${mName} `);
-                break;
-            } catch (err) {
-                console.warn(`QA Failed(${mName}): `, err.message);
-                lastQaError = err;
+                console.log(`[QA] Trying model: ${modelName}`);
+                const geminiRes = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { maxOutputTokens: 1024 }
+                        })
+                    }
+                );
+                const geminiData = await geminiRes.json();
+                if (geminiData.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    textAnswer = geminiData.candidates[0].content.parts[0].text;
+                    console.log(`[QA] ✅ Success with ${modelName}`);
+                    break;
+                }
+                // Log the exact API error for debugging
+                const errMsg = geminiData.error?.message || JSON.stringify(geminiData.error) || 'Unknown error';
+                console.warn(`[QA] ${modelName} failed: ${errMsg}`);
+                lastError = new Error(errMsg);
+            } catch (fetchErr) {
+                console.warn(`[QA] ${modelName} fetch error: ${fetchErr.message}`);
+                lastError = fetchErr;
             }
         }
 
         if (textAnswer) {
-            console.log('Gemini Answer Generated');
             return res.json({ answer: textAnswer });
         }
 
-        throw lastQaError || new Error("All QA models failed");
+        throw lastError || new Error('All Gemini models failed');
 
     } catch (error) {
         console.error('Gemini QA CRASH:', error.message);
