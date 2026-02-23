@@ -595,7 +595,7 @@ When answering questions:
 
         // Direct Gemini REST API - bypasses SDK issues entirely (Node 22 has built-in fetch)
         const geminiKey = process.env.GEMINI_API_KEY;
-        const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.0-pro'];
+        const geminiModels = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
         let textAnswer = null;
         let lastError = null;
 
