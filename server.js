@@ -1297,6 +1297,41 @@ app.get('/api/debug-diagnosis', async (req, res) => {
         });
     }
 });
+
+// ============================================================
+// TEST ENDPOINT - Check Gemini API directly (debug only)
+// ============================================================
+app.get('/api/test-gemini', async (req, res) => {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return res.json({ status: 'error', message: 'GEMINI_API_KEY not set' });
+
+    const results = [];
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.0-pro'];
+    for (const modelName of models) {
+        try {
+            const r = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: 'Say hello in one word.' }] }] })
+                }
+            );
+            const data = await r.json();
+            results.push({
+                model: modelName,
+                status: r.status,
+                ok: r.ok,
+                answer: data.candidates?.[0]?.content?.parts?.[0]?.text || null,
+                error: data.error || null
+            });
+        } catch (e) {
+            results.push({ model: modelName, status: 'fetch_error', error: e.message });
+        }
+    }
+    res.json({ key_prefix: key.substring(0, 10) + '...', results });
+});
+
 // =============================================
 // SERVE FRONTEND STATIC FILES (Production)
 // =============================================
