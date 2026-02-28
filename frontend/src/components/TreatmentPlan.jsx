@@ -489,7 +489,16 @@ export default function TreatmentPlan({ disease, severity, medicines, naturalTre
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 className="w-full bg-brand-main hover:bg-brand-deep text-white font-bold py-4 rounded-xl shadow-button hover:shadow-button-hover transition-all flex items-center justify-center gap-2"
-                                onClick={() => alert("Treatment Plan Saved!")}
+                                onClick={() => {
+                                    const planData = {
+                                        disease,
+                                        severity,
+                                        medicines: getDisplayedItems('chemical'),
+                                        naturalTreatments: getDisplayedItems('natural').map(t => typeof t === 'string' ? t : t.name),
+                                        preventiveMeasures: getDisplayedItems('prevention').map(t => typeof t === 'string' ? t : t.name)
+                                    };
+                                    navigate('/schedule', { state: planData });
+                                }}
                             >
                                 {t('common.save')}
                             </motion.button>
