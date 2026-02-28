@@ -492,11 +492,12 @@ export default function TreatmentPlan({ disease, severity, medicines, naturalTre
                                 onClick={() => {
                                     const planData = {
                                         disease,
-                                        severity,
+                                        severity_level: severity,
                                         medicines: getDisplayedItems('chemical'),
-                                        naturalTreatments: getDisplayedItems('natural').map(t => typeof t === 'string' ? t : t.name),
-                                        preventiveMeasures: getDisplayedItems('prevention').map(t => typeof t === 'string' ? t : t.name)
+                                        natural_treatments: getDisplayedItems('natural').map(t => typeof t === 'string' ? t : t.name),
+                                        preventive_measures: getDisplayedItems('prevention').map(t => typeof t === 'string' ? t : t.name)
                                     };
+                                    console.log('Navigating to schedule with data:', planData);
                                     navigate('/schedule', { state: planData });
                                 }}
                             >
