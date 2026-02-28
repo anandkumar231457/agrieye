@@ -25,12 +25,14 @@ export default function TreatmentSchedule() {
 
     // Load saved plan on mount
     useEffect(() => {
+        console.log('[Schedule] Mount. State:', newTreatmentData);
         const savedPlan = localStorage.getItem(STORAGE_KEY);
         if (savedPlan) {
             try {
                 const parsed = JSON.parse(savedPlan);
+                console.log('[Schedule] Loaded from storage:', parsed);
                 setSchedule(parsed);
-                setTreatmentType(parsed.treatmentType);
+                setTreatmentType(parsed.treatmentType || 'medicine');
 
                 // Load completed tasks
                 const savedTasks = localStorage.getItem(`${STORAGE_KEY}_tasks`);
@@ -42,16 +44,19 @@ export default function TreatmentSchedule() {
                 if (parsed.schedule && parsed.schedule.length > 0) {
                     setSelectedDay(parsed.schedule[0]);
                     // Set current month to first treatment day
-                    setCurrentMonth(new Date(parsed.schedule[0].date));
+                    if (parsed.schedule[0].date) {
+                        setCurrentMonth(new Date(parsed.schedule[0].date));
+                    }
                 }
             } catch (error) {
-                console.error('Failed to load saved plan:', error);
+                console.error('[Schedule] Failed to load saved plan:', error);
             }
         } else if (newTreatmentData) {
             // New plan from dashboard - generate schedule
+            console.log('[Schedule] Generating new schedule from state');
             generateSchedule(treatmentType);
         }
-    }, []);
+    }, [newTreatmentData]); // Re-run if state changes
 
     // Generate schedule only when treatment type changes
     const handleTreatmentTypeChange = (type) => {
@@ -63,6 +68,7 @@ export default function TreatmentSchedule() {
 
     const generateSchedule = async (type) => {
         if (!newTreatmentData && !schedule) {
+            console.warn('[Schedule] No data to generate schedule from');
             return;
         }
 
@@ -73,6 +79,8 @@ export default function TreatmentSchedule() {
             natural_treatments: schedule.naturalTreatments || [],
             preventive_measures: schedule.preventiveMeasures || []
         };
+
+        console.log('[Schedule] Requesting schedule with data:', data);
 
         setLoading(true);
         try {
@@ -86,6 +94,11 @@ export default function TreatmentSchedule() {
             });
 
             const scheduleData = response.data;
+            console.log('[Schedule] Received response:', scheduleData);
+
+            if (!scheduleData || !scheduleData.schedule) {
+                throw new Error('Invalid schedule data received from server');
+            }
 
             // Save to localStorage
             localStorage.setItem(STORAGE_KEY, JSON.stringify(scheduleData));
@@ -94,10 +107,13 @@ export default function TreatmentSchedule() {
             // Auto-select first day and set month
             if (scheduleData.schedule && scheduleData.schedule.length > 0) {
                 setSelectedDay(scheduleData.schedule[0]);
-                setCurrentMonth(new Date(scheduleData.schedule[0].date));
+                if (scheduleData.schedule[0].date) {
+                    setCurrentMonth(new Date(scheduleData.schedule[0].date));
+                }
             }
         } catch (error) {
-            console.error('Failed to generate schedule:', error);
+            console.error('[Schedule] Failed to generate schedule:', error);
+            alert(`Failed to generate schedule: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -147,15 +163,23 @@ export default function TreatmentSchedule() {
     };
 
     const isScheduledDay = (date) => {
-        if (!schedule || !date) return false;
-        const dateStr = date.toISOString().split('T')[0];
-        return schedule.schedule.some(d => d.date === dateStr);
+        if (!schedule || !schedule.schedule || !date) return false;
+        try {
+            const dateStr = date.toISOString().split('T')[0];
+            return schedule.schedule.some(d => d.date === dateStr);
+        } catch (e) {
+            return false;
+        }
     };
 
     const getScheduleDay = (date) => {
-        if (!schedule || !date) return null;
-        const dateStr = date.toISOString().split('T')[0];
-        return schedule.schedule.find(d => d.date === dateStr);
+        if (!schedule || !schedule.schedule || !date) return null;
+        try {
+            const dateStr = date.toISOString().split('T')[0];
+            return schedule.schedule.find(d => d.date === dateStr);
+        } catch (e) {
+            return null;
+        }
     };
 
     const changeMonth = (direction) => {
