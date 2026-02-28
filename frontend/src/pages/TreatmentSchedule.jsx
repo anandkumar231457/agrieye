@@ -4,7 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Calendar, Check, Circle, Pill, Leaf, ArrowLeft,
-    Loader2, AlertCircle, Trash2, ChevronLeft, ChevronRight
+    Loader2, AlertCircle, Trash2, ChevronLeft, ChevronRight,
+    ShieldAlert
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs';
 
@@ -162,24 +163,24 @@ export default function TreatmentSchedule() {
         return days;
     };
 
+    const getLocalDateString = (date) => {
+        if (!date) return "";
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const isScheduledDay = (date) => {
         if (!schedule || !schedule.schedule || !date) return false;
-        try {
-            const dateStr = date.toISOString().split('T')[0];
-            return schedule.schedule.some(d => d.date === dateStr);
-        } catch (e) {
-            return false;
-        }
+        const dateStr = getLocalDateString(date);
+        return schedule.schedule.some(d => d.date === dateStr);
     };
 
     const getScheduleDay = (date) => {
         if (!schedule || !schedule.schedule || !date) return null;
-        try {
-            const dateStr = date.toISOString().split('T')[0];
-            return schedule.schedule.find(d => d.date === dateStr);
-        } catch (e) {
-            return null;
-        }
+        const dateStr = getLocalDateString(date);
+        return schedule.schedule.find(d => d.date === dateStr);
     };
 
     const changeMonth = (direction) => {
@@ -329,6 +330,82 @@ export default function TreatmentSchedule() {
                             </button>
                         </div>
                     </div>
+                )}
+
+                {/* Plan Summary Section */}
+                {schedule && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-xl shadow-card border border-gray-200 p-6 mb-6"
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Plan Summary</h2>
+                            <div className="flex items-center gap-2 px-3 py-1 bg-brand-main/10 text-brand-main rounded-full text-sm font-bold">
+                                <span>{schedule.severity} Severity</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Medicines */}
+                            <div className="space-y-3">
+                                <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                                    <Pill size={16} className="text-orange-500" />
+                                    <span>Recommended Medicines</span>
+                                </h3>
+                                {schedule.medicines?.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {schedule.medicines.map((m, i) => (
+                                            <div key={i} className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                                                <p className="font-bold text-orange-900 text-sm">{m.name || m}</p>
+                                                {m.dosage && <p className="text-xs text-orange-700">{m.dosage} • {m.frequency}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">No chemical medicines recommended.</p>
+                                )}
+                            </div>
+
+                            {/* Natural Treatments */}
+                            <div className="space-y-3">
+                                <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                                    <Leaf size={16} className="text-green-500" />
+                                    <span>Organic Treatments</span>
+                                </h3>
+                                {schedule.naturalTreatments?.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {schedule.naturalTreatments.map((t, i) => (
+                                            <div key={i} className="p-3 bg-green-50 rounded-lg border border-green-100">
+                                                <p className="text-sm text-green-900 font-medium">{t}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">No organic treatments recommended.</p>
+                                )}
+                            </div>
+
+                            {/* Preventive Measures */}
+                            <div className="space-y-3">
+                                <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                                    <ShieldAlert size={16} className="text-blue-500" />
+                                    <span>Prevention Tactics</span>
+                                </h3>
+                                {schedule.preventiveMeasures?.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {schedule.preventiveMeasures.map((p, i) => (
+                                            <div key={i} className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                                <p className="text-sm text-blue-900 font-medium">{p}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">No prevention measures provided.</p>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
                 )}
 
                 {loading ? (

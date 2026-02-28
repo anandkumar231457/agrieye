@@ -796,19 +796,22 @@ Do not include any explanations or markdown.Only the JSON object.`;
                 ...scheduleData,
                 treatmentType,
                 disease,
-                severity
+                severity,
+                medicines: medicines || [],
+                naturalTreatments: naturalTreatments || [],
+                preventiveMeasures: preventiveMeasures || []
             });
         }
 
-        // Fallback if all models fail
         return res.json(getFallbackSchedule(disease, treatmentType));
-
     } catch (error) {
         console.error('Schedule generation error:', error);
-        res.status(500).json({
-            error: 'Failed to generate schedule',
-            details: error.message
-        });
+        if (!res.headersSent) {
+            res.status(500).json({
+                error: 'Failed to generate schedule',
+                details: error.message
+            });
+        }
     }
 });
 
